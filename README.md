@@ -49,6 +49,7 @@ To run:
 
 ```
 install nw.js
+decompress an adiweb release, or install the node_modules manually
 then:
 $ cd agentui
 $ nw .
