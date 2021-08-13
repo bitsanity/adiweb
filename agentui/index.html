@@ -1,0 +1,221 @@
+<html>
+<head>
+  <meta charset="UTF-8"/>
+
+  <script src="libs/jquery.min.js"></script>
+  <script src="libs/qrcode.min.js"></script>
+  <script src="languages/labels.js"></script>
+  <script src="languages/english.js"></script>
+
+  <script type="text/javascript">
+    const HTTPREQ = require( 'request' );
+    const CRYPTO = require( 'crypto' );
+    const SECP256K1 = require( 'secp256k1' );
+    const ADILOS = require( 'adilosjs' );
+    const HASHLIB = require( 'hash.js' );
+    const ECIES = require( 'ecies-parity' );
+  </script>
+
+  <script src="app/pubsub.js"></script>
+  <script src="app/agent.js"></script>
+  <script src="app/loginctrl.js"></script>
+  <script src="app/httpost.js"></script>
+  <script src="app/encdec.js"></script>
+</head>
+
+<body>
+<!-- Challenge Dialog -->
+<div id=QRDialog>
+<table width=100%>
+<tr>
+  <td align=center><div id="ADILOSLabel" class="label" /></td>
+</tr>
+<tr>
+  <td align=center>
+    <button id=ADILOSChallengeButton onclick="PubSub.publish('GetChallenge')">
+    </button>
+  </td>
+</tr>
+<tr>
+  <td align=center bgcolor=white height=500>
+    <span id="ChallengeArea"></span>
+  </td>
+</tr>
+<tr>
+  <td align=center>
+    <button id=RespondButton onclick="PubSub.publish('ScanResponse')">
+    </button>
+</tr>
+</table>
+</div>
+
+<!-- Camera/Video Dialog -->
+<div id=CameraDialog>
+<table width=100%>
+<tr>
+  <td class="label" align=center valign=top width=100%>
+    <div id="CameraLabel"></div>
+  </td>
+</tr>
+<tr>
+  <td align=center bgcolor=white height=500>
+    <video id="ScannerVideo"
+           width=500 height=500
+           muted autoplay playsinline></video>
+  </td>
+</tr>
+<tr>
+  <td align=center>
+    <button id=CancelResponseButton onclick="PubSub.publish('CancelResponse')">
+    </button>
+</tr>
+</table>
+</div>
+
+<!-- Hello/Main Screen -->
+<div id=HelloScreen>
+<table width=100%>
+<tr>
+  <td class="label" align=right>
+    <div id=PeerPubkeyLabel></div>
+  </td>
+  <td align=left>
+    <div id=PeerPubkey></div>
+  </td>
+</tr>
+<tr>
+  <td>&nbsp;</td>
+</tr>
+
+<tr>
+  <td class="label" align=right>
+    <div id=UserPubkeyLabel></div>
+  </td>
+  <td align=left>
+    <div id=UserPubkey></div>
+  </td>
+</tr>
+<tr>
+  <td>&nbsp;</td>
+</tr>
+
+<tr>
+  <td>&nbsp;</td>
+</tr>
+
+<tr>
+  <td class="label" align=right>
+    <div id=MOTDLabel></div>
+  </td>
+  <td align=left>
+    <div id=MOTD></div>
+  </td>
+</tr>
+<tr>
+  <td>&nbsp;</td>
+</tr>
+<tr>
+  <td/>
+  <td>
+    <button id=MOTDButton onclick="PubSub.publish('GetMOTD')"></button>
+  </td>
+</tr>
+
+</table>
+</div>
+
+<script type="module">
+  import QrScanner from "./node_modules/qr-scanner/qr-scanner.min.js";
+  QrScanner.WORKER_PATH = "./node_modules/qr-scanner/qr-scanner-worker.min.js";
+
+  var scancb;
+  var scanner;
+
+  global.setVideo = function(video) {
+    if (scanner) {
+      scanner.destroy();
+    }
+
+    scanner = new QrScanner( video, result => {
+      result = result.replace(/\s/g, '');
+      scancb( result );
+    } );
+  }
+
+  global.startQRScanner = function() {
+    if (scanner) scanner.start();
+  }
+
+  global.pauseQRScanner = function() {
+    if (scanner) scanner.pause();
+  }
+
+  global.setScannerCallback = function( cb ) {
+    scancb = cb;
+  }
+</script>
+
+<script type="text/javascript">
+
+  function initialState() {
+    $( "#QRDialog" ).show()
+    $( "#CameraDialog" ).hide()
+    $( "#HelloScreen" ).hide()
+  }
+
+  function setupVideo() {
+    global.setVideo( document.getElementById("ScannerVideo") );
+    global.setScannerCallback( (res) => {
+      global.pauseQRScanner();
+      PubSub.publish( "QRScanned", res );
+    } );
+  }
+
+  PubSub.subscribe( 'Challenge', chhex => {
+    $( "#ChallengeArea" ).empty();
+
+    let qrcode = new QRCode( "ChallengeArea", {
+      text:chhex,
+      width:450, height:450,
+      colorDark: "#000000",
+      correctLevel: QRCode.CorrectLevel.H
+    } )
+
+    $( "#QRDialog" ).show()
+    $( "#CameraDialog" ).hide()
+  } )
+
+  PubSub.subscribe( 'ScanResponse', () => {
+    $( "#QRDialog" ).hide()
+    $( "#CameraDialog" ).show()
+    global.startQRScanner()
+  } )
+
+  PubSub.subscribe( 'QRScanned', data => {
+    $( "#CameraDialog" ).hide()
+  } )
+
+  PubSub.subscribe( 'CancelResponse', () => {
+    initialState();
+  } )
+
+  PubSub.subscribe( 'LoggedIn', (obj) => {
+    $( "#HelloScreen" ).show()
+    $( "#PeerPubkey" ).html( obj.svr );
+    $( "#UserPubkey" ).html( obj.user );
+  } )
+
+  PubSub.subscribe( 'MOTD', (motd) => {
+    $( "#MOTD" ).html( motd );
+  } )
+
+  window.resizeTo( 800, 600 );
+  LABELS.setLabels();
+
+  setTimeout( setupVideo, 250 );
+  setTimeout( initialState, 250 );
+</script>
+
+</body>
+</html>
+
