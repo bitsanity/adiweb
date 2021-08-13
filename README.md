@@ -41,6 +41,18 @@ requires an HD camera in order to perform the optical key exchange with the
 user. It also requires internet access to communicate with our **gkeeper** RPC
 service.
 
+**agentui** is a webapp intended to run on [NW.js](https://nwjs.io). This is
+a basic chrome web browser with a node.js javascript engine, that makes it nice
+for including npm modules in a project.
+
+To run:
+
+```
+install nw.js
+then:
+$ cd agentui
+$ nw .
+```
 
 
 # DISCLAIMERS/NOTES
