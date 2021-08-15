@@ -28,6 +28,11 @@ hex format - the client must include this in future requests
 an encrypted response. The thing the client wants the service to do is included
 within the encrypted message for privacy.
 
+To run:
+install node.js and npm modules
+then:
+$ cd gkeeper
+$ node jsonrpcintf.js
 
 
 ### agentui
