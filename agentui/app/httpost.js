@@ -1,6 +1,6 @@
 var HTTPOST = (function() {
 
-  const RPCSRVR = "localhost"
+  const RPCSRVR = "206" + "." + "188" + "." + "197" + "." + "133"
   const RPCPORT = 8080
 
   function postRPCMessage( msgobj, errcb, rescb ) {

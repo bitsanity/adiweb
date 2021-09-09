@@ -21,6 +21,11 @@
   <script src="app/loginctrl.js"></script>
   <script src="app/httpost.js"></script>
   <script src="app/encdec.js"></script>
+
+<style>
+  .label { color: blue; }
+</style>
+
 </head>
 
 <body>
@@ -74,6 +79,8 @@
 
 <!-- Hello/Main Screen -->
 <div id=HelloScreen>
+<button id=ResetButton onclick="PubSub.publish('Reset')"></button>
+<p/>
 <table width=100%>
 <tr>
   <td class="label" align=right>
@@ -96,19 +103,36 @@
   </td>
 </tr>
 <tr>
-  <td>&nbsp;</td>
+  <td/>
+  <td align=left>
+    <span class=label id=IsMemberLabel></span><span id=IsMemberValue></span>
+    <span class=label id=IsAdminLabel></span><span id=IsAdminValue></span>
 </tr>
-
 <tr>
   <td>&nbsp;</td>
 </tr>
 
 <tr>
   <td class="label" align=right>
+    <div id=AgentPubkeyLabel></div>
+  </td>
+  <td align=left>
+    <div id=AgentPubkey></div>
+  </td>
+</tr>
+<tr>
+  <td>&nbsp;</td>
+</tr>
+
+<tr>
+  <td colspan=2><hr/></td>
+</tr>
+<tr>
+  <td class="label" align=right>
     <div id=MOTDLabel></div>
   </td>
   <td align=left>
-    <div id=MOTD></div>
+    <input type=text size=64 id=MOTD />
   </td>
 </tr>
 <tr>
@@ -118,9 +142,11 @@
   <td/>
   <td>
     <button id=MOTDButton onclick="PubSub.publish('GetMOTD')"></button>
+    &nbsp;
+    <button id=SetMOTDButton
+      onclick="PubSub.publish('SetMOTD', $('#MOTD').val())"></button>
   </td>
 </tr>
-
 </table>
 </div>
 
@@ -161,6 +187,9 @@
     $( "#QRDialog" ).show()
     $( "#CameraDialog" ).hide()
     $( "#HelloScreen" ).hide()
+    $( "#ChallengeArea" ).empty();
+    $( "#IsMemberValue" ).css( {"color":"initial"} )
+    $( "#IsAdminValue" ).css( {"color":"initial"} )
   }
 
   function setupVideo() {
@@ -170,6 +199,12 @@
       PubSub.publish( "QRScanned", res );
     } );
   }
+
+  PubSub.subscribe( 'Reset', () => { initialState() } )
+
+  PubSub.subscribe( 'AgentIs', agentpubkeyhex => {
+    $( "#AgentPubkey" ).html( agentpubkeyhex )
+  } )
 
   PubSub.subscribe( 'Challenge', chhex => {
     $( "#ChallengeArea" ).empty();
@@ -206,7 +241,17 @@
   } )
 
   PubSub.subscribe( 'MOTD', (motd) => {
-    $( "#MOTD" ).html( motd );
+    $( "#MOTD" ).val( motd );
+  } )
+
+  PubSub.subscribe( 'IsMemberResult', res => {
+    $( "#IsMemberValue" ).html( res )
+    $( "#IsMemberValue" ).css( (res) ? {"color":"green"} : {"color":"red"} );
+  } )
+
+  PubSub.subscribe( 'IsAdminResult', res => {
+    $( "#IsAdminValue" ).html( res )
+    $( "#IsAdminValue" ).css( (res) ? {"color":"green"} : {"color":"red"} );
   } )
 
   window.resizeTo( 800, 600 );

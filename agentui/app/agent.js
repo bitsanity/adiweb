@@ -1,7 +1,6 @@
 var KGAgent = (function() {
 
-  const motdRequest = {req: "motd"}
-
+  var userPubkey;
   var serverPubkey;
   var agentkey = CRYPTO.randomBytes( 32 );
 
@@ -11,11 +10,16 @@ var KGAgent = (function() {
   }
 
   function addAgentToChallenge( gkChallB64 ) {
+    PubSub.publish( 'AgentIs' , ADILOS.toHexString(Agent.pubkey) )
     return ADILOS.makeResponse( gkChallB64, Agent.privkey )
   }
 
   function onLogin( obj ) {
+    userPubkey = obj.user;
     serverPubkey = ADILOS.fromHexString( obj.svr );
+
+    setTimeout( isMember, 250 )
+    setTimeout( isAdmin, 500 )
   }
 
   function makeMsgSigParams( blacktexthex ) {
@@ -52,7 +56,7 @@ var KGAgent = (function() {
     return rsp.msg;
   }
 
-  function getMOTD() {
+  function doRpcExchange( reqobj, rescb ) {
 
     let rpcmsg = {
       method:"do",
@@ -61,11 +65,10 @@ var KGAgent = (function() {
     }
 
     ENCDEC.encrypt(
-      motdRequest,
+      reqobj,
       Buffer.from(serverPubkey),
       err => {
         alert( err )
-        return
       },
       res => {
         rpcmsg.params = makeMsgSigParams( res )
@@ -77,22 +80,51 @@ var KGAgent = (function() {
           try {
             ENCDEC.decrypt( Agent.privkey, parseRpcResponse(resp), err2 => {
               alert( err )
-              return
             },
             redobj => {
-              PubSub.publish( 'MOTD', redobj.rsp );
+              rescb( redobj )
             } );
           }
           catch (ex) {
-            console.log( ex )
             alert( ex.toString() )
           }
         } );
     } )
   }
 
+  const motdRequest = {req:"motd"}
+
+  function getMOTD() {
+    doRpcExchange( motdRequest, redobj => {
+      PubSub.publish( 'MOTD', redobj.rsp );
+    } )
+  }
+
+  function setMOTD( msg ) {
+    let setMOTDRequest = {req:"setMOTD", motd:msg}
+    doRpcExchange( setMOTDRequest, redobj => {
+      if (!redobj.rsp)
+        alert( 'failed to set MOTD' )
+    } )
+  }
+
+  function isMember() {
+    let isMemberRequest = {req:"isMember"}
+    doRpcExchange( isMemberRequest, redobj => {
+      PubSub.publish( 'IsMemberResult', redobj.rsp );
+    } )
+  }
+
+  function isAdmin() {
+    let isAdminRequest = {req:"isAdmin"}
+    doRpcExchange( isAdminRequest, redobj => {
+      PubSub.publish( 'IsAdminResult', redobj.rsp );
+    } )
+  }
+
   PubSub.subscribe( 'LoggedIn', onLogin );
   PubSub.subscribe( 'GetMOTD', getMOTD );
+  PubSub.subscribe( 'SetMOTD', setMOTD );
 
   return {
     addAgentToChallenge:addAgentToChallenge

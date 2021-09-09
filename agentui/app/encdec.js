@@ -29,8 +29,6 @@ var ENCDEC = (function() {
   // returns redobj
   function decrypt( privkeybytes, blackmsghex, errcb, rescb ) {
 
-    console.log( 'decrypting...' )
-
     try {
       let blackmsgbuff = Buffer.from( blackmsghex, 'hex' );
       let privkeybuff = Buffer.from( privkeybytes );

@@ -15,10 +15,15 @@ var LABELS = (function() {
     $( "#CancelResponseButton").html( STRINGS[LANG].CancelResponseButton );
 
     // Hello
+    $( "#ResetButton" ).html( STRINGS[LANG].ResetButton );
     $( "#PeerPubkeyLabel" ).html( STRINGS[LANG].PeerPubkeyLabel );
     $( "#UserPubkeyLabel" ).html( STRINGS[LANG].UserPubkeyLabel );
+    $( "#IsMemberLabel" ).html( STRINGS[LANG].IsMemberLabel );
+    $( "#IsAdminLabel" ).html( STRINGS[LANG].IsAdminLabel );
+    $( "#AgentPubkeyLabel" ).html( STRINGS[LANG].AgentPubkeyLabel );
     $( "#MOTDLabel" ).html( STRINGS[LANG].MOTDLabel );
     $( "#MOTDButton" ).html( STRINGS[LANG].MOTDButton );
+    $( "#SetMOTDButton" ).html( STRINGS[LANG].SetMOTDButton );
   }
 
   return {
