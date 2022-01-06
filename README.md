@@ -5,9 +5,8 @@ PLEASE READ DISCLAIMERS/NOTES AT BOTTOM
 
 
 This repo illustrates use of the [ADILOS](https://github.com/bitsanity/ADILOS)
-protocol and the [simpleth ](https://github.com/bitsanity/simpleth) app to
-perform a secure exchange of public keys and thereafter use elliptic-curve
-encryption to exchange messages.
+protocol to exchange public keys and then communicate securely with elliptic-curve
+encryption.
 
 **adiweb** includes two programs: **gkeeper** and **agentui**
 
@@ -25,8 +24,7 @@ gatekeeper generate and return an ADILOS identity challenge
 thereby complete the public-key exchange. Returns the session public key in
 hex format - the client must include this in future requests
 * `do` : enables clients to provide an encrypted and signed request and receive
-an encrypted response. The thing the client wants the service to do is included
-within the encrypted message for privacy.
+an encrypted response.
 
 To run:
 
@@ -71,6 +69,5 @@ Warning"
 * This code is intended for illustration and education. The **gkeeper** program
 depends on node.js's "http" module, which may now or someday be vulnerable to
 some kind(s) of web attack.
-* **simpleth** is one implementation of a ADILOS/keymaster. It is a free app
-already available on [Google Play](https://play.google.com/store/apps/details?id=com.simpleth&hl=en)
+* **simpleth** is one implementation of a ADILOS/keymaster.
 
