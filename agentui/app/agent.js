@@ -64,32 +64,33 @@ var KGAgent = (function() {
       id: ADILOS.toHexString(serverPubkey)
     }
 
-    ENCDEC.encrypt(
-      reqobj,
-      Buffer.from(serverPubkey),
-      err => {
-        alert( err )
+    let aeskeyarr = new Uint8Array( 32 )
+    SECP256K1.ecdh(
+      /* pubkey */ serverPubkey,
+      /* seckey */ Agent.privkey,
+      /* option */ {},
+      /* output */ aeskeyarr )
+
+    let aeskeyhex = ADILOS.toHexString( aeskeyarr )
+
+    let black = ENCDEC.encrypt( reqobj, aeskeyhex )
+    rpcmsg.params = makeMsgSigParams( black )
+
+    HTTPOST.postRPCMessage(
+      rpcmsg,
+      errmsg => {
+        alert( errmsg );
       },
-      res => {
-        rpcmsg.params = makeMsgSigParams( res )
-
-        HTTPOST.postRPCMessage( rpcmsg, errmsg => {
-          alert( errmsg );
-        }, resp => {
-
-          try {
-            ENCDEC.decrypt( Agent.privkey, parseRpcResponse(resp), err2 => {
-              alert( err )
-            },
-            redobj => {
-              rescb( redobj )
-            } );
-          }
-          catch (ex) {
-            alert( ex.toString() )
-          }
-        } );
-    } )
+      resp => {
+        console.log( 'resp: ' + JSON.stringify(resp) )
+        let redmsg = parseRpcResponse( resp )
+        let redhex = ENCDEC.decrypt( redmsg, aeskeyhex )
+        let redstr = Buffer.from( redhex, 'hex' ).toString('UTF-8')
+        let redobj = JSON.parse( redstr )
+        console.log( 'redobj: ' + JSON.stringify(redobj) )
+        rescb( redobj )
+      }
+    );
   }
 
   const motdRequest = {req:"motd"}

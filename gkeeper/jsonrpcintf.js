@@ -4,7 +4,7 @@ const crypto = require( 'crypto' );
 const secp256k1 = require( 'secp256k1' );
 const hasher = require( 'hash.js' );
 const adilos = require( 'adilosjs' );
-const ecies = require( 'ecies-parity' );
+const encdec = require( '../common/aes256.js' );
 
 const respHeader = {
   'Content-Type' : 'application/json; charset=utf-8',
@@ -56,6 +56,8 @@ http.createServer( function(req, resp) {
         resp.end( JSON.stringify(answer) );
       }
       catch( ex ) {
+        console.log( ex )
+
         let errrsp = JSON.parse( JSON.stringify(rpcTemplate) ); // deep copy
         errrsp.error = JSON.parse( JSON.stringify(errObjTempl) );
         errrsp.error.message = "invalid request";
@@ -110,6 +112,10 @@ function handleLoginResponse( rspB64 ) {
     throw 'no session';
   }
 
+  // if (acl does not have the user's pubkey) {
+  //   throw 'user missing from acl'
+  // }
+
   let peerpubkey65 = parts[1].pubkey;
 
   if (parts[1].pubkey.length == 33) {
@@ -125,6 +131,18 @@ function handleLoginResponse( rspB64 ) {
   sessionsdb[mypubkey].agentpubkey = peerpubkey;
   sessionsdb[mypubkey].agentpubkey65 = peerpubkey65;
   sessionsdb[mypubkey].authenticated = Date.now()
+
+  let aeskeyarr = new Uint8Array( 32 )
+
+  secp256k1.ecdh(
+    /* pubkey */ new Uint8Array(peerpubkey65),
+    /* seckey */ adilos.fromHexString(sessionsdb[mypubkey].privkeyhex),
+    /* option */ {},
+    /* output */ aeskeyarr )
+
+  sessionsdb[mypubkey].aeskeyhex = adilos.toHexString( aeskeyarr )
+
+  console.log( 'aes: ' + sessionsdb[mypubkey].aeskeyhex )
 
   let rpcrsp = JSON.parse( JSON.stringify(rpcTemplate) ); // deep copy
   rpcrsp.result = mypubkey;
@@ -188,6 +206,17 @@ async function handleDo( redobj, sessionpubkey ) {
     )
   }
 
+  //
+  // everything after this point requires user (keymaster) be a member
+  //
+  if (!isMember(sessionsdb[sessionpubkey].userpubkey)) {
+    throw 'not a member'
+  }
+
+  //
+  // handle other requests here ...
+  //
+
   throw 'unrecognized reqest: ' + redobj.req
 }
 
@@ -228,15 +257,17 @@ async function handleMessage( msg )
   }
 
   if ('do' === mth) {
-    let redjsonstr = await ecies.decrypt(
-      Buffer.from(sessionsdb[pbk].privkeyhex,'hex'), Buffer.from(prm[0],'hex'))
+    let redhexstr = encdec.decrypt( sessionsdb[pbk].aeskeyhex, prm[0] )
+    let redbuff = Buffer.from( redhexstr, 'hex' );
+    let redjsonstr = redbuff.toString('UTF-8');
+    console.log( 'redjson = ' + redjsonstr )
 
-    console.log( 'do: ' + redjsonstr );
     let redresultobj = await handleDo( JSON.parse(redjsonstr), pbk )
+    console.log( 'redresultobj = ' + JSON.stringify(redresultobj) )
 
-    let blackresult =
-      await ecies.encrypt(Buffer.from(sessionsdb[pbk].agentpubkey65),
-	                  Buffer.from(JSON.stringify(redresultobj),'UTF-8'))
+    let redresult = Buffer.from( JSON.stringify(redresultobj),'UTF-8' )
+    let blackresult = 
+      encdec.encrypt( sessionsdb[pbk].aeskeyhex, adilos.toHexString(redresult) )
 
     let blackresulthex = blackresult.toString('hex')
 
