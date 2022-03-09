@@ -1,9 +1,54 @@
 {
-  "chromium-args": "--enable-logging=stderr",
-  "name": "ADILOS KGAgent",
+  "name": "agentui",
   "version": "0.1.0",
-  "description": "KGAgent for remote Gatekeeper",
+  "description": "adiweb KGAgent",
   "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dist":
+      "build --tasks win-x64,linux-x64,mac-x64 --mirror https://dl.nwjs.io/ .",
+    "start": "run --x64 --mirror https://dl.nwjs.io/ ."
+  },
+  "author": "anonymous",
+  "license": "MIT",
+  "build": {
+    "appId": "",
+    "nwVersion": "0.61.0",
+    "packed": true,
+    "targets": [
+      "zip",
+      "nsis7z"
+    ],
+    "strippedProperties": [
+      "build"
+    ],
+    "outputPattern": "${NAME}-${VERSION}-${PLATFORM}-${ARCH}",
+    "win": {
+      "productName": "agentui",
+      "companyName": "bitsanity",
+      "copyright": "copyright",
+      "icon": "./logo.png"
+    },
+    "mac": {
+      "displayName": "agentui",
+      "copyright": "copyright",
+      "icon": "./logo.png",
+      "plistStrings": {
+        "CFBundleIdentifier":
+            "com.github.bitsanity.adilos.adiweb.agentui.modified",
+        "CFBundleDocumentTypes": []
+      }
+    },
+    "nsis": {
+      "installDirectory": "$PROGRAMFILES\\${_COMPANYNAME}\\${_APPNAME}",
+      "diffUpdaters": true
+    }
+  },
+  "devDependencies": {
+    "nwjs-builder-phoenix": "^1.15.0"
+  },
+  "icon": "./logo.png",
+  "chromium-args": "--enable-logging=stderr",
   "dependencies": {
     "adilosjs": "^1.0.0",
     "ecies-parity": "^0.1.0",

@@ -11,7 +11,7 @@ STRINGS["English"] = {
   CameraLabel:"Show Your Response to Camera",
   CancelResponseButton:"Cancel",
 
-  // Hello
+  // Main
   ResetButton:"Reset",
   PeerPubkeyLabel:"Gatekeeper Session Pubkey:",
   UserPubkeyLabel:"Keymaster (User) Pubkey:",
@@ -20,6 +20,11 @@ STRINGS["English"] = {
   AgentPubkeyLabel:"KGAgent (My) Pubkey:",
   MOTDLabel:"Message Of The Day:",
   MOTDButton:"Get MOTD",
-  SetMOTDButton:"Set MOTD"
+  SetMOTDButton:"Set MOTD",
+
+  SelectedFileLabel:"File Selected:",
+  DownloadButton:"Download",
+  UploadFileLabel:"Upload File:",
+  UploadButton:"Upload"
 };
 

@@ -24,6 +24,11 @@ var LABELS = (function() {
     $( "#MOTDLabel" ).html( STRINGS[LANG].MOTDLabel );
     $( "#MOTDButton" ).html( STRINGS[LANG].MOTDButton );
     $( "#SetMOTDButton" ).html( STRINGS[LANG].SetMOTDButton );
+
+    $( "#SelectedFileLabel" ).html( STRINGS[LANG].SelectedFileLabel );
+    $( "#DownloadButton" ).html( STRINGS[LANG].DownloadButton );
+    $( "#UploadFileLabel" ).html( STRINGS[LANG].UploadFileLabel );
+    $( "#UploadButton" ).html( STRINGS[LANG].UploadButton );
   }
 
   return {

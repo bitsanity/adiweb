@@ -1,0 +1,125 @@
+body {
+  background-color: #FFFFFF;
+}
+
+.label { color: blue; }
+
+.tab {
+    border: 1px solid #ccc;
+    background-color: inherit;
+}
+
+.tab button {
+    background-color: inherit;
+    font-family: inherit;
+    font-weight: bold;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+}
+
+.tab button:hover {
+    background-color: #ddd;
+}
+
+.tab button.active {
+    background-color: #ccc;
+}
+
+.tabcontent {
+    display: none;
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-top: none;
+}
+
+.table {
+  border-spacing: 5px;
+}
+
+td {
+  padding: 5px;
+}
+
+.fieldname {
+  font-weight: bold;
+  color: blue;
+}
+
+.redfieldname {
+  font-weight: bold;
+  color: red;
+}
+
+.redbutton {
+  font-weight: bold;
+  color: red;
+}
+
+.appbutton {
+  font-family: inherit;
+  font-weight: bold;
+}
+
+.units {
+  font-style: italic;
+}
+
+fieldset {
+  border: 3px solid darkgreen;
+}
+
+.redfieldset {
+  border: 3px solid red;
+}
+
+.legend {
+  color: darkgreen;
+  font-weight: bold;
+  border-radius: 3px;
+}
+
+.redlegend {
+  color: red;
+  font-weight: bold;
+  border-radius: 3px;
+}
+
+.data {
+  font-family: monospace;
+  color: darkgreen;
+}
+
+.reddata {
+  font-family: monospace;
+  color: red;
+}
+
+.total {
+  color: darkgreen;
+  background-color: #ccc;
+}
+
+.sumtotal {
+  color: darkgreen;
+  background-color: #ccc;
+  font-weight: bold;
+}
+
+.indicator {
+  border: 1px solid darkgreen;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.hyperlink {
+  color: darkblue;
+  text-decoration: underline;
+  font-size: small;
+}
+

@@ -2,12 +2,15 @@
 <head>
   <meta charset="UTF-8"/>
 
+  <link id="Skin" rel="stylesheet" type="text/css" href="stylesheet.css"/>
+
   <script src="libs/jquery.min.js"></script>
   <script src="libs/qrcode.min.js"></script>
   <script src="languages/labels.js"></script>
   <script src="languages/english.js"></script>
 
   <script type="text/javascript">
+    const FS = require( 'fs' );
     const HTTPREQ = require( 'request' );
     const CRYPTO = require( 'crypto' );
     const SECP256K1 = require( 'secp256k1' );
@@ -21,10 +24,6 @@
   <script src="app/loginctrl.js"></script>
   <script src="app/httpost.js"></script>
   <script src="app/encdec.js"></script>
-
-<style>
-  .label { color: blue; }
-</style>
 
 </head>
 
@@ -77,9 +76,24 @@
 </table>
 </div>
 
-<!-- Hello/Main Screen -->
-<div id=HelloScreen>
+<!-- Main Area -->
+<div id=Main>
+
+<!-- TAB BUTTONS -->
+<div id=TabButtons class="tab">
+  <button class="tablinks" id="UserTabButton" onclick="openTab(event, 'UserTab')">Session</button>
+  <button class="tablinks" id="MOTDTabButton" onclick="openTab(event, 'MOTDTab')">MOTD</button>
+  <button class="tablinks" id="FilesTabButton" onclick="openTab(event, 'FilesTab');PubSub.publish('FilesTabSelected')">Files</button>
+</div>
+
+<!-- User Tab -->
+<div id=UserTab class=tabcontent>
+<p/>
+&nbsp;
+<p/>
 <button id=ResetButton onclick="PubSub.publish('Reset')"></button>
+<p/>
+&nbsp;
 <p/>
 <table width=100%>
 <tr>
@@ -123,10 +137,14 @@
 <tr>
   <td>&nbsp;</td>
 </tr>
+</table>
+</div> <!-- UserTab -->
 
-<tr>
-  <td colspan=2><hr/></td>
-</tr>
+<div id=MOTDTab class=tabcontent>
+<p/>
+&nbsp;
+<p/>
+<table>
 <tr>
   <td class="label" align=right>
     <div id=MOTDLabel></div>
@@ -149,6 +167,51 @@
 </tr>
 </table>
 </div>
+
+<div id=FilesTab class=tabcontent>
+<p/>
+&nbsp;
+<p/>
+Files available:
+<p/>
+<div id=FileList style="height:300px;border:1px solid;background-color:lightgrey;overflow-y:scroll">
+<div>nothing fetched</div>
+</div>
+<p/>
+
+<table>
+<tr>
+  <td align=right><div id="SelectedFileLabel" class="label" /></td>
+  <td align=left><div id="SelectedFileField" class=data />[none]</td>
+</tr>
+<tr>
+  <td>&nbsp;</td>
+  <td align=left>
+    <button id=DownloadButton
+      onclick="PubSub.publish('GetFile',$('#SelectedFileField').html())"/>
+  </td>
+</tr>
+<tr>
+  <td>&nbsp;</td>
+</tr>
+</table>
+<div id=UploadWidgets hidden>
+<table>
+<tr>
+  <td align=right><div id="UploadFileLabel" class="label" /></td>
+  <td align=left><input id="UploadFileField" type=file /></td>
+</tr>
+<tr>
+  <td/>
+  <td align=left>
+    <button id=UploadButton
+      onclick="PubSub.publish('UploadFile',$('#UploadFileField').val())"/>
+  </td>
+</tr>
+</table>
+</div> <!-- UploadWidgets -->
+</div> <!-- FilesTab -->
+</div> <!-- Main -->
 
 <script type="module">
   import QrScanner from "./node_modules/qr-scanner/qr-scanner.min.js";
@@ -183,10 +246,30 @@
 
 <script type="text/javascript">
 
+  function openTab(evt, tabName) {
+    var ii, tabcontent, tablinks;
+
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (ii = 0; ii < tabcontent.length; ii++) {
+      tabcontent[ii].style.display = "none";
+    }
+
+    tablinks = document.getElementsByClassName("tablinks");
+    for (ii = 0; ii < tablinks.length; ii++) {
+      tablinks[ii].className = tablinks[ii].className.replace(" active", "");
+    }
+
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.className += " active";
+  }
+
   function initialState() {
     $( "#QRDialog" ).show()
     $( "#CameraDialog" ).hide()
-    $( "#HelloScreen" ).hide()
+    $( "#Main" ).hide()
+    $( "#UserTab" ).hide()
+    $( "#MOTDTab" ).hide()
+    $( "#FilesTab" ).hide()
     $( "#ChallengeArea" ).empty();
     $( "#IsMemberValue" ).css( {"color":"initial"} )
     $( "#IsAdminValue" ).css( {"color":"initial"} )
@@ -235,7 +318,7 @@
   } )
 
   PubSub.subscribe( 'LoggedIn', (obj) => {
-    $( "#HelloScreen" ).show()
+    $( "#Main" ).show()
     $( "#PeerPubkey" ).html( obj.svr );
     $( "#UserPubkey" ).html( obj.user );
   } )
@@ -246,15 +329,36 @@
 
   PubSub.subscribe( 'IsMemberResult', res => {
     $( "#IsMemberValue" ).html( res )
-    $( "#IsMemberValue" ).css( (res) ? {"color":"green"} : {"color":"red"} );
+    $( "#IsMemberValue" ).css(
+      (res === 'true') ? {"color":"green"} : {"color":"red"} );
   } )
 
   PubSub.subscribe( 'IsAdminResult', res => {
     $( "#IsAdminValue" ).html( res )
-    $( "#IsAdminValue" ).css( (res) ? {"color":"green"} : {"color":"red"} );
+    $( "#IsAdminValue" ).css(
+      (res === 'true') ? {"color":"green"} : {"color":"red"} );
+    if (res === 'true') $( "#UploadWidgets" ).show()
+    else $( "#UploadWidgets" ).hide()
   } )
 
-  window.resizeTo( 800, 600 );
+  PubSub.subscribe( 'ListFilesResult', fnamestringarray => {
+    $( "#FileList" ).empty()
+    fnamestringarray.forEach( (val, ix, arr) => {
+      let oc = 'onclick="PubSub.publish(\'SelectFile\',\'' + val + '\')"'
+      $( "#FileList" ).append( '<div ' + oc + '>' + val + '</div>' )
+    } )
+  } )
+
+  PubSub.subscribe( 'FilesTabSelected', fname => {
+    $( "#SelectedFileField" ).html( "[none]" )
+    $( "#UploadFileField" ).val( "" )
+  } )
+
+  PubSub.subscribe( 'SelectFile', fname => {
+    $( "#SelectedFileField" ).html( fname )
+  } )
+
+  window.resizeTo( 800, 610 );
   LABELS.setLabels();
 
   setTimeout( setupVideo, 250 );

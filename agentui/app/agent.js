@@ -123,12 +123,40 @@ var KGAgent = (function() {
     } )
   }
 
+  function getFileList() {
+    doRpcExchange( {req:"listFiles"}, redobj => {
+      PubSub.publish( 'ListFilesResult', redobj.rsp )
+    } )
+  }
+
   PubSub.subscribe( 'LoggedIn', onLogin );
   PubSub.subscribe( 'GetMOTD', getMOTD );
   PubSub.subscribe( 'SetMOTD', setMOTD );
+  PubSub.subscribe( 'FilesTabSelected', getFileList );
+
+  PubSub.subscribe( 'GetFile', fname => {
+    if (!confirm('Download: ' + fname + ' ?')) return
+
+    doRpcExchange( {req:'getFile', fname:fname}, redobj => {
+      let data = Buffer.from( redobj.rsp, 'base64' )
+      FS.writeFileSync( './files/' + fname, data )
+      alert( 'saved ./files/' + fname )
+      PubSub.publish( 'FilesTabSelected' )
+    } )
+  } )
+
+  PubSub.subscribe( 'UploadFile', fname => {
+    if (!confirm('Upload: ' + fname + ' ?')) return
+    let data = FS.readFileSync( fname ).toString( 'base64' );
+    doRpcExchange( {req:'putFile',fdataB64:data}, redobj => {
+      alert( 'Uploaded: ' + fname )
+      PubSub.publish( 'FilesTabSelected' )
+    } )
+  } )
 
   return {
-    addAgentToChallenge:addAgentToChallenge
+    addAgentToChallenge:addAgentToChallenge,
+    getFileList: getFileList
   }
 
 })();

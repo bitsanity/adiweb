@@ -20,6 +20,12 @@ if (!fs.existsSync(ACLFILE)) {
   fs.closeSync( fs.openSync(ACLFILE,'w') )
 }
 
+const FILESDIR = './files/'
+fs.mkdir( FILESDIR, {recursive:true}, err => {
+  if (err)
+    console.log( 'failed to create files subdir: ' + err.toString() )
+} )
+
 var THE_MOTD = "Chancellor on brink of second bailout for banks"
 
 var sessionsdb = {};
@@ -173,6 +179,20 @@ function isAdmin( pubkeyhex ) {
   return false
 }
 
+function handleListFiles() {
+  return fs.readdirSync( FILESDIR ) // filenames as string[]
+}
+
+function handleGetFile( fname ) {
+  let dataBuff = fs.readFileSync( FILESDIR + fname )
+  return dataBuff.toString('utf8')
+}
+
+function handlePutFile( fname, fdataB64 ) {
+  fs.writeFileSync( FILESDIR + fname, fdataB64 )
+  return true
+}
+
 async function handleDo( redobj, sessionpubkey ) {
 
   if (redobj == null) throw 'nothing to do'
@@ -211,6 +231,25 @@ async function handleDo( redobj, sessionpubkey ) {
   //
   if (!isMember(sessionsdb[sessionpubkey].userpubkey)) {
     throw 'not a member'
+  }
+
+  // ============================
+  // list/get/put File operations
+  // ============================
+
+  if ('listFiles' == redobj.req) {
+    return {rsp:handleListFiles()}
+  }
+
+  if ('getFile' == redobj.req) {
+    return {rsp: handleGetFile(redobj.fname)}
+  }
+
+  if ('putFile' == redobj.req) {
+    if (!isAdmin(sessionsdb[sessionpubkey].userpubkey))
+      throw 'user is not admin'
+
+    return {rsp:handlePutFile(redobj.fname, redobj.fdataB64)}
   }
 
   //
@@ -263,7 +302,6 @@ async function handleMessage( msg )
     console.log( 'redjson = ' + redjsonstr )
 
     let redresultobj = await handleDo( JSON.parse(redjsonstr), pbk )
-    console.log( 'redresultobj = ' + JSON.stringify(redresultobj) )
 
     let redresult = Buffer.from( JSON.stringify(redresultobj),'UTF-8' )
     let blackresult = 
