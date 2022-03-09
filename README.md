@@ -64,9 +64,6 @@ $ nw .
 
 # DISCLAIMERS/NOTES
 
-* **adiweb** uses a 128-bit implemention of [Elliptic Curve Integrated Encryption Standard](https://cryptobook.nakov.com/asymmetric-key-ciphers/ecies-public-key-encryption). This is good but probably not safe enough for super-top-secret.
-* See [sigp/ecies-parity](https://github.com/sigp/ecies-parity) "Cryptography
-Warning"
 * This code is intended for illustration and education. The **gkeeper** program
 depends on node.js's "http" module, which may now or someday be vulnerable to
 some kind(s) of web attack.
